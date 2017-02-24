@@ -26,7 +26,7 @@ async def query(context, addr: str, port=27015):
 				lServer["Hostname"] = lServer["Hostname"].encode("iso-8859-1").decode("utf-8")
 			except:
 				pass;
-			em = discord.Embed(title=lServer["Hostname"], description='Map: {0}'.format(lServer["Map"]), colour=0x10EE00)
+			em = discord.Embed(title=":lock: "+lServer["Hostname"] if bool(lServer["Password"]) else ":unlock: "+lServer["Hostname"], description='Map: {0}'.format(lServer["Map"]), colour=0x10EE00)
 			em.set_author(name='Query result ({0}):'.format(lServer["_engine_"]), icon_url=bot.user.avatar_url)
 			em.add_field(name="Players", value="{0}/{1}".format(lServer["Players"], lServer["MaxPlayers"]), inline=True)
 			em.add_field(name="VAC", value=("Enabled" if bool(lServer["Secure"]) else "Disabled"), inline=True)
