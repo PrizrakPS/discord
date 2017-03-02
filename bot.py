@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import discord
 from discord.ext import commands
-import time
 import asyncio
 from tinydb import TinyDB, Query
 from classes.SourceQuery import SourceQuery
@@ -23,17 +22,17 @@ async def query(context, addr: str, port=27015):
 		oServer = SourceQuery(addr=addr, port=port, timeout=5.0); lServer = oServer.getInfo()
 		if lServer is not False:
 			try:
-				lServer["Hostname"] = lServer["Hostname"].encode("iso-8859-1").decode("utf-8")
+				lServer['Hostname'] = lServer['Hostname'].encode('iso-8859-1').decode('utf-8')
 			except:
 				pass;
-			em = discord.Embed(title=":lock: "+lServer["Hostname"] if bool(lServer["Password"]) else ":unlock: "+lServer["Hostname"], description='Map: {0}'.format(lServer["Map"]), colour=0x10EE00)
-			em.set_author(name='Query result ({0}):'.format(lServer["_engine_"]), icon_url=bot.user.avatar_url)
-			em.add_field(name="Players", value="{0}/{1}".format(lServer["Players"], lServer["MaxPlayers"]), inline=True)
-			em.add_field(name="VAC", value=("Enabled" if bool(lServer["Secure"]) else "Disabled"), inline=True)
-			em.add_field(name="Running on", value=lServer["OS"], inline=True)
-			em.add_field(name="Mod", value=lServer["GameDesc"], inline=False)
-			em.add_field(name="Type", value=lServer["Dedicated"], inline=True)
-			em.add_field(name="Version", value=lServer["Version"], inline=True)
+			em = discord.Embed(title=":lock: "+lServer['Hostname'] if bool(lServer['Password']) else ":unlock: "+lServer['Hostname'], description='Map: {0}'.format(lServer['Map']), colour=0x10EE00)
+			em.set_author(name='Query result ({0}):'.format(lServer['_engine_']), icon_url=bot.user.avatar_url)
+			em.add_field(name="Players", value="{0}/{1}".format(lServer['Players'], lServer['MaxPlayers']), inline=True)
+			em.add_field(name="VAC", value=("Enabled" if bool(lServer['Secure']) else "Disabled"), inline=True)
+			em.add_field(name="Running on", value=lServer['OS'], inline=True)
+			em.add_field(name="Mod", value=lServer['GameDesc'], inline=False)
+			em.add_field(name="Type", value=lServer['Dedicated'], inline=True)
+			em.add_field(name="Version", value=lServer['Version'], inline=True)
 
 			await bot.send_message(context.message.channel, embed=em)
 		else:
@@ -73,24 +72,25 @@ async def check(context):
 	db = TinyDB('./database.json'); lServers = db.search(Search.userid==context.message.author.id); db.close()
 	em = discord.Embed(title="Server query results", description="Total servers: {0}".format(len(lServers)), colour=0x5677E8)
 	for i in range(len(lServers)):
-		full_addr = lServers[i]["server_addr"]+":"+str(lServers[i]["server_port"])
-		em.add_field(name=full_addr, value=":white_check_mark: Responded" if is_alive(lServers[i]["server_addr"], lServers[i]["server_port"]) else ":warning: Didn’t respond", inline=False)
+		full_addr = lServers[i]['server_addr']+":"+str(lServers[i]['server_port'])
+		em.add_field(name=full_addr, value=":white_check_mark: Responded" if is_alive(lServers[i]['server_addr'], lServers[i]['server_port']) else ":warning: Didn’t respond", inline=False)
 	await bot.send_message(context.message.channel, embed=em)
 
-
+async def sendMessage(userid, listitem):
+	user = discord.User(id=userid)
+	await bot.send_message(user, "Some servers did not respond:\n```"+"\n".join(listitem)+"```")
 async def crontab():
 	await bot.wait_until_ready()
 	while not bot.is_closed:
 		db = TinyDB('./database.json'); lServers = db.all(); db.close()
 		servers = ""; mList = {};
 		for i in range(len(lServers)):
-			if (not is_alive(lServers[i]["server_addr"], lServers[i]["server_port"])) and (not is_alive(lServers[i]["server_addr"], lServers[i]["server_port"], 15)):
-				mList.setdefault(lServers[i]["userid"],[]).extend([" * "+lServers[i]["server_addr"]+":"+str(lServers[i]["server_port"])])
+			if (not is_alive(lServers[i]['server_addr'], lServers[i]['server_port'])) and (not is_alive(lServers[i]['server_addr'], lServers[i]['server_port'], 15)):
+				mList.setdefault(lServers[i]['userid'],[]).extend([" * "+lServers[i]["server_addr"]+":"+str(lServers[i]["server_port"])])
 			else:
 				continue;
 		for key, value in mList.items():
-			user = discord.User(id=key)
-			await bot.send_message(user, "Some servers did not respond:\n```"+"\n".join(value)+"```")
+			await sendMessage(key, value)
 		await asyncio.sleep(120)
 
 bot.loop.create_task(crontab())
