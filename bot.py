@@ -2,6 +2,7 @@
 import discord
 from discord.ext import commands
 import asyncio
+from datetime import datetime
 from tinydb import TinyDB, Query
 from classes.SourceQuery import SourceQuery
 from modules.WorkerFunctions import *
@@ -19,7 +20,7 @@ async def on_command_error(error, ctx):
 @bot.command(pass_context=True, aliases=['q'], description="Queries a server and prints some if it’s info")
 async def query(context, addr: str, port=27015):
 	if is_valid_ip(addr):
-		oServer = SourceQuery(addr=addr, port=port, timeout=5.0); lServer = oServer.getInfo()
+		oServer = SourceQuery(addr=addr, port=port, timeout=5.0); lServer = await oServer.getInfo()
 		if lServer is not False:
 			try:
 				lServer['Hostname'] = lServer['Hostname'].encode('iso-8859-1').decode('utf-8')
@@ -73,7 +74,7 @@ async def check(context):
 	em = discord.Embed(title="Server query results", description="Total servers: {0}".format(len(lServers)), colour=0x5677E8)
 	for i in range(len(lServers)):
 		full_addr = lServers[i]['server_addr']+":"+str(lServers[i]['server_port'])
-		em.add_field(name=full_addr, value=":white_check_mark: Responded" if is_alive(lServers[i]['server_addr'], lServers[i]['server_port']) else ":warning: Didn’t respond", inline=False)
+		em.add_field(name=full_addr, value=":white_check_mark: Responded" if await is_alive(lServers[i]['server_addr'], lServers[i]['server_port']) else ":warning: Didn’t respond", inline=False)
 	await bot.send_message(context.message.channel, embed=em)
 
 async def sendMessage(userid, listitem):
@@ -83,12 +84,15 @@ async def crontab():
 	await bot.wait_until_ready()
 	while not bot.is_closed:
 		db = TinyDB('./database.json'); lServers = db.all(); db.close()
-		servers = ""; mList = {};
+		print("[{0}] Running query on {1} servers in total…".format(datetime.now().strftime('%H:%M:%S.%f'), len(lServers)))
+		servers = ""; mList = {}; nIterator = 0;
 		for i in range(len(lServers)):
-			if (not is_alive(lServers[i]['server_addr'], lServers[i]['server_port'])) and (not is_alive(lServers[i]['server_addr'], lServers[i]['server_port'], 15)):
+			if (not await is_alive(lServers[i]['server_addr'], lServers[i]['server_port'])) and (not await is_alive(lServers[i]['server_addr'], lServers[i]['server_port'], 15)):
 				mList.setdefault(lServers[i]['userid'],[]).extend([" * "+lServers[i]["server_addr"]+":"+str(lServers[i]["server_port"])])
+				nIterator+=1
 			else:
 				continue;
+		print("[{0}] {1} servers did not respond this time".format(datetime.now().strftime('%H:%M:%S.%f'), nIterator))
 		for key, value in mList.items():
 			await sendMessage(key, value)
 		await asyncio.sleep(120)

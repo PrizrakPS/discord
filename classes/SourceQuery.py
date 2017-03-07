@@ -15,6 +15,7 @@ import socket
 import time
 import struct
 import sys
+import asyncio
 
 class SourceQuery(object):
 	is_third = False
@@ -36,6 +37,7 @@ class SourceQuery(object):
 		self.sock.settimeout(self.timeout)
 		self.sock.connect((self.ip, self.port))
 
+	@asyncio.coroutine
 	def getInfo(self):
 		self.connect()
 		self.sock.send(A2S_INFO)
