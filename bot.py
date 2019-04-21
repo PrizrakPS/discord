@@ -94,4 +94,4 @@ async def crontab():
 		await asyncio.sleep(120)
 
 bot.loop.create_task(crontab())
-bot.run('paste_your_token_here')
+bot.run('NTY5NTkwMDA2NDc4NDA1NjQ0.XLy2zg.nPAHb1XQQCEjBqB8hx2v-SLDJ10')
